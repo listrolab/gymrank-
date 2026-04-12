@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>GymRank — Show up. Get ranked.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#000;font-family:'Space Grotesk',sans-serif;overflow:hidden}
+#app{max-width:430px;margin:0 auto;height:100vh;background:#09090d;position:relative;overflow:hidden}
+.screen{display:none;flex-direction:column;height:100vh;overflow-y:auto;padding:24px 20px 88px;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
+:root{
+  --bg:#09090d;--s:#121216;--s2:#1a1a20;--b:#1e1e26;--b2:#26262e;
+  --acc:#7c6aff;--abg:#191630;--ab:#2d2560;--am:#9d8fff;
+  --grn:#a3e635;--gbg:#172208;--gb:#264010;
+  --red:#ff5555;--rbg:#1a0808;--rb:#3a1212;
+  --amb:#fb923c;--abgm:#1a1008;
+  --t:#fff;--t2:#aaa;--t3:#555;--t4:#2a2a2a;
+}
+/* Nav */
+.nav{display:flex;background:var(--s);border-top:1px solid var(--b);padding:10px 0 6px;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;z-index:50}
+.ni{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 0;border:none;background:none;font-family:'Space Grotesk',sans-serif}
+.ni-ic{font-size:20px;line-height:1}
+.ni-lb{font-size:10px;font-weight:600;color:var(--t4)}
+.ni.on .ni-lb{color:var(--am)}
+/* Cards + buttons */
+.card{background:var(--s);border:1px solid var(--b);border-radius:18px;padding:18px;margin-bottom:10px}
+.btn{width:100%;padding:14px;border-radius:13px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;border:none;letter-spacing:-.2px;transition:opacity .15s}
+.btn:active{opacity:.85}
+.bp{background:var(--acc);color:#fff}
+.bg{background:transparent;border:1px solid var(--b2);color:var(--t3);margin-top:8px}
+.bgrn{background:var(--grn);color:#0a0a0a}
+.back{background:none;border:none;color:var(--t3);font-size:14px;cursor:pointer;font-family:'Space Grotesk',sans-serif;padding:0;margin-bottom:18px}
+/* Inputs */
+.inp{width:100%;background:var(--s);border:1.5px solid var(--b2);border-radius:12px;padding:13px 14px;font-size:15px;color:var(--t);font-family:'Space Grotesk',sans-serif;outline:none;margin-bottom:10px}
+.inp:focus{border-color:var(--acc)}
+.inp::placeholder{color:var(--t4)}
+/* Chips */
+.chip{display:flex;align-items:center;gap:7px;background:var(--s);border:1px solid var(--b2);border-radius:11px;padding:11px 12px;color:var(--t3);font-size:13px;font-weight:500;cursor:pointer;font-family:'Space Grotesk',sans-serif;transition:all .15s;text-align:left}
+.chip.on{background:var(--abg);border-color:var(--acc);color:var(--am)}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:16px}
+/* Labels */
+.slbl{font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.eyebrow{font-size:12px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+.headline{font-size:26px;font-weight:800;color:var(--t);letter-spacing:-.6px;line-height:1.18;margin-bottom:10px}
+.headline span{color:var(--acc)}
+.subhead{font-size:14px;color:var(--t3);line-height:1.65;margin-bottom:22px}
+.subhead b{color:var(--t2);font-weight:500}
+/* Progress */
+.prog-wrap{display:flex;gap:4px;margin-bottom:24px}
+.prog-seg{flex:1;height:3px;border-radius:2px;background:var(--b)}
+.prog-seg.done{background:var(--acc)}
+/* Avatars */
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;border:2px solid var(--bg)}
+.av-y{background:var(--acc);color:#fff}
+.av-a{background:#ff6b6b;color:#fff}
+.av-b{background:#ffd93d;color:#1a1a1a}
+.av-c{background:#6bcb77;color:#1a1a1a}
+.av-d{background:#4d96ff;color:#fff}
+.av-e{background:#ff922b;color:#fff}
+.av-f{background:#cc5de8;color:#fff}
+/* Rank badges */
+.rk{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.r1{background:var(--gbg);color:var(--grn);border:1px solid var(--gb)}
+.r2{background:var(--abg);color:var(--am);border:1px solid var(--ab)}
+.rbot{background:var(--rbg);color:var(--red);border:1px solid var(--rb)}
+/* Leaderboard */
+.lb-row{display:flex;align-items:center;gap:11px;padding:12px 15px;border-radius:14px;margin-bottom:4px}
+.lby{background:var(--abg);border:1px solid var(--ab)}
+.lbo{background:var(--s);border:1px solid var(--b)}
+.lbb{background:var(--rbg);border:1px solid var(--rb)}
+.lb-pos{font-size:18px;font-weight:700;color:var(--t3);width:24px;text-align:center;flex-shrink:0}
+.p1{color:var(--grn)}.p2{color:var(--am)}.p3{color:var(--amb)}
+.lb-i{flex:1}
+.lb-n{font-size:13px;font-weight:600;color:var(--t);margin-bottom:1px}
+.lb-s{font-size:11px;color:var(--t3)}
+.lb-b{width:64px;flex-shrink:0}
+.bt{background:var(--b);border-radius:3px;height:5px;overflow:hidden}
+.bf{height:5px;border-radius:3px;background:var(--acc)}
+.bfy{background:var(--grn)}
+/* Week grid */
+.wg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.wl{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px}
+.wlb{text-align:center;font-size:10px;color:var(--t4);font-weight:500}
+.wd{height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.wdone{background:var(--abg);color:var(--am);border:1px solid var(--ab)}
+.wmiss{background:var(--b);color:var(--t4)}
+.wtoday{background:var(--acc);color:#fff}
+.wgoal{background:var(--gbg);color:var(--grn);border:1px solid var(--gb)}
+/* Check in button */
+.ci-btn{width:100%;padding:17px;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
+.ci-r{background:var(--acc);color:#fff}
+.ci-d{background:var(--gbg);border:1px solid var(--gb);color:var(--grn)}
+/* Tabs */
+.tab-bar{display:flex;gap:3px;background:var(--s);border-radius:11px;padding:3px;margin-bottom:16px}
+.tab{flex:1;padding:9px 4px;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif;background:transparent;color:var(--t3)}
+.tab.on{background:var(--acc);color:#fff}
+/* Avatar stack */
+.av-stk{display:flex;margin-bottom:10px}
+.av-stk .av{margin-right:-7px}
+/* Notif */
+.notif{border-radius:13px;padding:12px 14px;margin-bottom:7px;display:flex;gap:9px;align-items:flex-start}
+.nd{background:var(--abg);border:1px solid var(--ab)}
+.ng{background:var(--gbg);border:1px solid var(--gb)}
+.nr{background:var(--rbg);border:1px solid var(--rb)}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px}
+/* Commit box */
+.commit-box{background:var(--rbg);border:1px solid var(--rb);border-radius:14px;padding:14px;margin-top:10px}
+.commit-t{font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.commit-tx{font-size:14px;color:#ddd;line-height:1.5;font-style:italic}
+/* XP */
+.xp-wrap{background:var(--b);border-radius:3px;height:4px;overflow:hidden;margin-top:5px}
+.xp-fill{background:var(--acc);height:4px;border-radius:3px}
+/* Season */
+.season-badge{background:#1a1040;border:1px solid var(--ab);border-radius:16px;padding:16px;margin-bottom:12px}
+/* Onboarding choices */
+.choices{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.choice{display:flex;align-items:center;gap:14px;background:var(--s);border:1.5px solid var(--b);border-radius:14px;padding:16px;cursor:pointer;transition:all .2s}
+.choice.on{background:var(--abg);border-color:var(--acc)}
+.ch-icon{width:44px;height:44px;border-radius:12px;background:var(--b);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.choice.on .ch-icon{background:var(--ab)}
+.ch-text{flex:1}
+.ch-title{font-size:14px;font-weight:700;color:var(--t);margin-bottom:2px}
+.ch-sub{font-size:12px;color:var(--t3);line-height:1.4}
+.choice.on .ch-sub{color:var(--am)}
+.ch-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--b2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.choice.on .ch-check{background:var(--acc);border-color:var(--acc);color:#fff;font-size:12px}
+/* Freq pills */
+.freq-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px}
+.freq{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:14px 4px;text-align:center;cursor:pointer}
+.freq.on{background:var(--abg);border-color:var(--acc)}
+.freq-num{font-size:22px;font-weight:800;color:var(--t3);margin-bottom:2px}
+.freq.on .freq-num{color:var(--acc)}
+.freq-lbl{font-size:10px;font-weight:600;color:var(--t4)}
+.freq.on .freq-lbl{color:var(--am)}
+/* Calc screen */
+.calc-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+.calc-item{font-size:13px;color:var(--t3);display:flex;align-items:center;gap:8px;opacity:0;transition:opacity .5s}
+.calc-item.show{opacity:1}
+.calc-dot{width:7px;height:7px;border-radius:50%;background:var(--grn);flex-shrink:0}
+/* Plan/paywall */
+.plan-card{background:var(--abg);border:1.5px solid var(--acc);border-radius:16px;padding:18px;margin-bottom:10px;position:relative}
+.plan-badge{position:absolute;top:14px;right:14px;background:var(--acc);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px}
+.plan-feat{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--t2);margin-bottom:6px}
+.plan-dot{width:6px;height:6px;border-radius:50%;background:var(--grn);flex-shrink:0}
+/* Persona */
+.persona-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.persona{background:var(--s);border:1.5px solid var(--b);border-radius:14px;padding:14px;cursor:pointer;text-align:center}
+.persona.on{background:var(--abg);border-color:var(--acc)}
+/* Reward tiers */
+.rt{border-radius:16px;padding:16px;margin-bottom:10px}
+.rt-active{background:var(--abg);border:1px solid var(--acc)}
+.rt-locked{background:#0e0e12;border:1px solid var(--b);opacity:.65}
+.rt-claimed{background:var(--gbg);border:1px solid var(--gb)}
+.ri{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border-radius:10px;padding:10px 12px;margin-bottom:6px}
+.ri-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* GPS banner */
+.gps-banner{background:#0a1a30;border:1px solid #1a3a6a;border-radius:12px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+/* Guarantee */
+.guarantee{display:flex;align-items:center;gap:10px;background:var(--gbg);border:1px solid var(--gb);border-radius:12px;padding:12px 14px;margin-bottom:12px}
+/* Stat row */
+.stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:22px}
+.stat-c{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px 8px;text-align:center}
+.stat-num{font-size:20px;font-weight:800;color:var(--acc);letter-spacing:-1px;margin-bottom:3px}
+.stat-lbl{font-size:10px;font-weight:600;color:var(--t3);line-height:1.3}
+/* Modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:flex-end;justify-content:center;max-width:430px;left:50%;transform:translateX(-50%)}
+.modal.open{display:flex}
+.modal-sheet{background:#141418;border:1px solid var(--b);border-radius:20px 20px 0 0;padding:22px 22px 40px;width:100%}
+.modal-handle{width:40px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto 18px}
+/* War */
+.war-card{background:var(--s);border:1px solid var(--b2);border-radius:16px;padding:16px;margin-bottom:10px}
+/* Coach */
+.coach-card{background:var(--s);border:1px solid var(--b);border-radius:16px;padding:16px;margin-bottom:10px}
+.coach-av{width:38px;height:38px;background:var(--acc);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+/* Share */
+.share-card{background:var(--gbg);border:1px solid var(--gb);border-radius:18px;padding:20px;text-align:center;margin-bottom:12px}
+/* Heatmap */
+.hm{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-bottom:6px}
+.hmc{height:18px;border-radius:3px}
+/* Result card */
+.result-card{background:var(--s);border:1px solid var(--b);border-radius:14px;padding:16px;margin-bottom:12px}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--b)}
+.result-row:last-child{border-bottom:none}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ═══ ONBOARDING 0: HOOK ═══ -->
+<div class="screen active" id="s-ob0">
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
+    <div style="font-size:64px;text-align:center;margin-bottom:18px;line-height:1">💪</div>
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:13px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Be honest</div>
+      <div style="font-size:30px;font-weight:800;color:var(--t);letter-spacing:-.7px;line-height:1.18;margin-bottom:12px">How many times have you quit the gym?</div>
+      <div style="font-size:14px;color:var(--t3);line-height:1.65">You started strong. Life got in the way. You told yourself <b style="color:var(--t2)">"I'll go next week."</b> Next week never came.</div>
+    </div>
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:20px;text-align:center">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:5px">The #1 reason people quit the gym:</div>
+      <div style="font-size:16px;font-weight:700;color:var(--red)">No one's watching. No one cares.</div>
+    </div>
+    <div style="font-size:14px;color:var(--t3);text-align:center;line-height:1.6;margin-bottom:24px">GymRank fixes that. <b style="color:var(--t2)">6 people. One pod. Everyone's watching.</b></div>
+  </div>
+  <button class="btn bp" onclick="go('ob1')">That's me — fix it →</button>
+  <button class="btn bg" onclick="go('ob1')">I've never quit. Show me anyway →</button>
+</div>
+
+<!-- ═══ ONBOARDING 1: SOCIAL PROOF ═══ -->
+<div class="screen" id="s-ob1">
+  <div class="prog-wrap"><div class="prog-seg done"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+  <div class="eyebrow">The research is clear</div>
+  <div class="headline">People who work out <span>with accountability</span> are 3× more likely to stick.</div>
+  <div class="subhead">Not a personal trainer. Not a class. Just <b>knowing someone is watching your streak.</b></div>
+  <div class="stat-row">
+    <div class="stat-c"><div class="stat-num">3×</div><div class="stat-lbl">more likely to stick</div></div>
+    <div class="stat-c"><div class="stat-num">80%</div><div class="stat-lbl">hit weekly goal</div></div>
+    <div class="stat-c"><div class="stat-num">6</div><div class="stat-lbl">people per pod</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+    <div style="display:flex"><div class="av av-a" style="width:26px;height:26px;font-size:10px;margin-right:-6px">S</div><div class="av av-y" style="width:26px;height:26px;font-size:10px;margin-right:-6px">A</div><div class="av av-b" style="width:26px;height:26px;font-size:10px;margin-right:-6px">J</div><div class="av av-c" style="width:26px;height:26px;font-size:10px">M</div></div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.4;margin-left:6px"><b style="color:var(--t)">4,200+ people</b> already in pods. Season 1 live now.</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:24px">
+    <div style="font-size:18px">⭐</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.4"><b style="color:var(--t)">"I haven't missed a week in 3 months."</b> First time ever. — Priya, Morning Grinders</div>
+  </div>
+  <button class="btn bp" onclick="go('ob2')">I want that →</button>
+</div>
+
+<!-- ═══ ONBOARDING 2: Q1 SITUATION ═══ -->
+<div class="screen" id="s-ob2">
+  <div class="prog-wrap"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+  <div class="eyebrow">Question 1 of 3</div>
+  <div class="headline">Where are you right now?</div>
+  <div class="subhead">Be honest — GymRank matches your pod to your <b>actual situation.</b></div>
+  <div class="choices" id="q1">
+    <div class="choice" onclick="pick('q1',this,'q1-btn')"><div class="ch-icon">😓</div><div class="ch-text"><div class="ch-title">I keep starting and quitting</div><div class="ch-sub">Motivation lasts 2 weeks.</div></div><div class="ch-check"></div></div>
+    <div class="choice" onclick="pick('q1',this,'q1-btn')"><div class="ch-icon">😐</div><div class="ch-text"><div class="ch-title">I go, but inconsistently</div><div class="ch-sub">Some weeks great. Then 3 weeks off.</div></div><div class="ch-check"></div></div>
+    <div class="choice" onclick="pick('q1',this,'q1-btn')"><div class="ch-icon">💪</div><div class="ch-text"><div class="ch-title">I'm consistent, I want competition</div><div class="ch-sub">I show up. I want to be ranked.</div></div><div class="ch-check"></div></div>
+  </div>
+  <button class="btn bp" id="q1-btn" style="opacity:.35;margin-top:auto" disabled onclick="go('ob3')">Continue →</button>
+</div>
+
+<!-- ═══ ONBOARDING 3: Q2 FREQUENCY ═══ -->
+<div class="screen" id="s-ob3">
+  <div class="prog-wrap"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+  <div class="eyebrow">Question 2 of 3</div>
+  <div class="headline">How often do you <span>want</span> to train?</div>
+  <div class="subhead"><b>Your pod ranks you on hitting your goal — not beating it.</b></div>
+  <div class="freq-grid">
+    <div class="freq" onclick="pickFreq(this)"><div class="freq-num">2×</div><div class="freq-lbl">per week</div></div>
+    <div class="freq on" onclick="pickFreq(this)"><div class="freq-num">3×</div><div class="freq-lbl">per week</div></div>
+    <div class="freq" onclick="pickFreq(this)"><div class="freq-num">4×</div><div class="freq-lbl">per week</div></div>
+    <div class="freq" onclick="pickFreq(this)"><div class="freq-num">5×</div><div class="freq-lbl">per week</div></div>
+  </div>
+  <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:22px">
+    <div style="font-size:12px;font-weight:700;color:var(--am);margin-bottom:5px">Good to know</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6">GymRank uses <b style="color:var(--t)">weekly</b> streaks — not daily. Miss one session and your streak survives. Miss the full week and it resets.</div>
+  </div>
+  <button class="btn bp" style="margin-top:auto" onclick="go('ob4')">That's my goal →</button>
+</div>
+
+<!-- ═══ ONBOARDING 4: Q3 OBSTACLE ═══ -->
+<div class="screen" id="s-ob4">
+  <div class="prog-wrap"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg"></div><div class="prog-seg"></div><div class="prog-seg"></div></div>
+  <div class="eyebrow">Question 3 of 3</div>
+  <div class="headline">What actually stops you?</div>
+  <div class="subhead">Pick your <b>real</b> reason. This shapes who you're matched with.</div>
+  <div class="choices" id="q3">
+    <div class="choice" onclick="pick('q3',this,'q3-btn')"><div class="ch-icon">😴</div><div class="ch-text"><div class="ch-title">No motivation after a long day</div><div class="ch-sub">I mean to go. I'm just too tired.</div></div><div class="ch-check"></div></div>
+    <div class="choice" onclick="pick('q3',this,'q3-btn')"><div class="ch-icon">🤷</div><div class="ch-text"><div class="ch-title">Nothing bad happens if I skip</div><div class="ch-sub">No consequence. So I don't feel guilty.</div></div><div class="ch-check"></div></div>
+    <div class="choice" onclick="pick('q3',this,'q3-btn')"><div class="ch-icon">🌀</div><div class="ch-text"><div class="ch-title">I lose momentum after one miss</div><div class="ch-sub">One bad week turns into a bad month.</div></div><div class="ch-check"></div></div>
+  </div>
+  <button class="btn bp" id="q3-btn" style="opacity:.35;margin-top:auto" disabled onclick="go('ob5')">Continue →</button>
+</div>
+
+<!-- ═══ ONBOARDING 5: CALCULATING ═══ -->
+<div class="screen" id="s-ob5">
+  <div class="calc-wrap">
+    <div style="font-size:13px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.08em">Building your plan</div>
+    <div style="position:relative;width:100px;height:100px;margin:0 auto">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="44" fill="none" stroke="#1e1e26" stroke-width="7"/>
+        <circle cx="50" cy="50" r="44" fill="none" stroke="#7c6aff" stroke-width="7" stroke-linecap="round" stroke-dasharray="277" stroke-dashoffset="277" id="calc-ring" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .8s ease"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:var(--acc)" id="calc-pct">0%</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;width:100%">
+      <div class="calc-item" id="ci1"><div class="calc-dot"></div><span>Analysing your goal frequency...</span></div>
+      <div class="calc-item" id="ci2"><div class="calc-dot"></div><span>Matching to pod profiles...</span></div>
+      <div class="calc-item" id="ci3"><div class="calc-dot"></div><span>Calculating your consistency score...</span></div>
+      <div class="calc-item" id="ci4"><div class="calc-dot"></div><span>Your personalised plan is ready</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ONBOARDING 6: YOUR PLAN ═══ -->
+<div class="screen" id="s-ob6">
+  <div class="prog-wrap"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg"></div></div>
+  <div class="eyebrow">Your GymRank plan</div>
+  <div class="headline">Here's what <span>changes</span> for you.</div>
+  <div class="result-card">
+    <div class="result-row"><span style="font-size:13px;color:var(--t3)">Weekly goal</span><span style="font-size:13px;font-weight:700;color:var(--acc)">3× per week</span></div>
+    <div class="result-row"><span style="font-size:13px;color:var(--t3)">Pod type</span><span style="font-size:13px;font-weight:700;color:var(--t)">Consistency pod</span></div>
+    <div class="result-row"><span style="font-size:13px;color:var(--t3)">Projected streak</span><span style="font-size:13px;font-weight:700;color:var(--grn)">Gold by week 9</span></div>
+    <div class="result-row"><span style="font-size:13px;color:var(--t3)">Season 1 status</span><span style="font-size:13px;font-weight:700;color:var(--amb)">Founder badge eligible</span></div>
+  </div>
+  <div style="background:var(--gbg);border:1px solid var(--gb);border-radius:12px;padding:14px;margin-bottom:20px">
+    <div style="font-size:12px;font-weight:700;color:var(--grn);margin-bottom:5px">What happens when you skip now:</div>
+    <div style="font-size:13px;color:var(--t2);line-height:1.6">Your pod sees it. Your rank drops. You owe the group a public commitment. <b style="color:var(--t)">There's a consequence now.</b></div>
+  </div>
+  <button class="btn bp" onclick="go('ob7')">Start my free trial →</button>
+</div>
+
+<!-- ═══ ONBOARDING 7: PAYWALL ═══ -->
+<div class="screen" id="s-ob7">
+  <div style="text-align:center;margin-bottom:18px">
+    <div style="font-size:12px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px">Unlock GymRank Pro</div>
+    <div style="font-size:24px;font-weight:800;color:var(--t);letter-spacing:-.5px;margin-bottom:5px">Try free for 7 days</div>
+    <div style="font-size:13px;color:var(--t3)">Cancel any time. No charge today.</div>
+  </div>
+  <div class="plan-card" id="plan-annual" onclick="selectPlan('annual')" style="cursor:pointer">
+    <div class="plan-badge">Most popular</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:3px">
+      <div style="font-size:19px;font-weight:800;color:var(--t);letter-spacing:-.4px">Annual</div>
+      <div id="dot-annual" style="width:20px;height:20px;border-radius:50%;background:#7c6aff;border:1.5px solid var(--acc);margin-left:auto;transition:all .2s"></div>
+    </div>
+    <div style="font-size:13px;color:var(--am);margin-bottom:14px">$49/year · just $4.08/mo</div>
+    <div class="plan-feat"><div class="plan-dot"></div>Unlimited pods</div>
+    <div class="plan-feat"><div class="plan-dot"></div>Full analytics + heatmap</div>
+    <div class="plan-feat"><div class="plan-dot"></div>Apple Watch check-in</div>
+    <div class="plan-feat"><div class="plan-dot"></div>Grace week — streak protection</div>
+    <div class="plan-feat"><div class="plan-dot"></div>Season 1 Founder badge</div>
+  </div>
+  <div id="plan-monthly" onclick="selectPlan('monthly')" style="background:var(--s);border:1px solid var(--b2);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .2s">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:14px;font-weight:700;color:var(--t)">Monthly</div><div style="font-size:13px;color:var(--t3)">$7/month · billed monthly</div></div>
+      <div id="dot-monthly" style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--b2);transition:all .2s"></div>
+    </div>
+  </div>
+  <div class="guarantee">
+    <div style="font-size:20px;flex-shrink:0">🛡️</div>
+    <div style="font-size:12px;color:var(--t2);line-height:1.5"><b style="color:var(--grn)">No charge today.</b> Cancel before 7 days ends and you pay nothing.</div>
+  </div>
+  <button class="btn bgrn" onclick="go('ob8')">Start free trial →</button>
+  <button class="btn bg" onclick="go('ob8')" style="font-size:13px;color:var(--t4)">Continue with free plan</button>
+</div>
+
+<!-- ═══ ONBOARDING 8: ACCOUNT ═══ -->
+<div class="screen" id="s-ob8">
+  <div class="prog-wrap"><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div><div class="prog-seg done"></div></div>
+  <div class="eyebrow">Last step</div>
+  <div class="headline">Create your account</div>
+  <div class="subhead">Your plan is saved.</div>
+  <input class="inp" type="text" placeholder="Your name (shows on leaderboard)" id="inp-name"/>
+  <input class="inp" type="email" placeholder="Email address"/>
+  <input class="inp" type="password" placeholder="Password"/>
+  <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:18px">
+    <div style="font-size:12px;font-weight:700;color:var(--am);margin-bottom:8px">Plan summary</div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b)"><span style="font-size:12px;color:var(--t3)">Goal</span><span style="font-size:12px;font-weight:600;color:var(--t)">3× per week</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--b)"><span style="font-size:12px;color:var(--t3)">Pod type</span><span style="font-size:12px;font-weight:600;color:var(--t)">Consistency pod</span></div>
+    <div style="display:flex;justify-content:space-between;padding:6px 0"><span style="font-size:12px;color:var(--t3)">Trial</span><span style="font-size:12px;font-weight:600;color:var(--grn)">7 days free</span></div>
+  </div>
+  <button class="btn bgrn" style="margin-top:auto" onclick="finishOnboarding()">Enter GymRank →</button>
+</div>
+
+<!-- ═══ WELCOME ═══ -->
+<div class="screen" id="s-welcome">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px">
+    <div style="font-size:52px;line-height:1">🏆</div>
+    <div style="font-size:12px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.1em">Welcome to GymRank</div>
+    <div style="font-size:26px;font-weight:800;color:var(--t);letter-spacing:-.6px;line-height:1.2">No more quitting.<br>Your pod is watching.</div>
+    <div style="font-size:14px;color:var(--t3);max-width:280px;line-height:1.65">Season 1 has started. Now you just have to show up.</div>
+    <div style="background:var(--gbg);border:1px solid var(--gb);border-radius:14px;padding:14px;width:100%;margin-top:6px;text-align:left">
+      <div style="font-size:12px;font-weight:700;color:var(--grn);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">Your next 3 steps</div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px"><div style="width:18px;height:18px;background:var(--gb);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--grn);flex-shrink:0">1</div><div style="font-size:13px;color:var(--t2)">Invite 5 friends with code <b style="color:var(--t)">GRND-5741</b></div></div>
+      <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:7px"><div style="width:18px;height:18px;background:var(--gb);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--grn);flex-shrink:0">2</div><div style="font-size:13px;color:var(--t2)">Or let us auto-match you</div></div>
+      <div style="display:flex;align-items:flex-start;gap:8px"><div style="width:18px;height:18px;background:var(--gb);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--grn);flex-shrink:0">3</div><div style="font-size:13px;color:var(--t2)">Check in after your first session</div></div>
+    </div>
+  </div>
+  <button class="btn bp" style="margin-top:20px" onclick="go('home')">Enter GymRank →</button>
+</div>
+
+<!-- ═══ HOME ═══ -->
+<div class="screen" id="s-home">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:9px"><div style="width:30px;height:30px;background:var(--acc);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M10 3L3 7v6l7 4 7-4V7L10 3z"/><path d="M10 3v14M3 7l7 4 7-4"/></svg></div><span style="font-size:16px;font-weight:800;color:var(--t);letter-spacing:-.5px">GymRank</span></div>
+    <button onclick="go('ob0')" style="background:none;border:1px solid var(--b2);border-radius:7px;padding:5px 10px;color:var(--t4);font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif">Restart</button>
+  </div>
+  <div class="season-badge">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div><div style="font-size:10px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Season 1 · Week 6</div><div style="font-size:17px;font-weight:800;color:#fff;letter-spacing:-.4px">Founder Era</div><div style="font-size:11px;color:var(--t3);margin-top:1px">51 days remaining</div></div>
+      <div style="background:rgba(124,106,255,.2);border-radius:10px;padding:7px 11px;text-align:center"><div style="font-size:19px;font-weight:800;color:#fff" id="h-rank">#2</div><div style="font-size:9px;color:var(--am);font-weight:600">SEASON</div></div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:3px;height:4px;overflow:hidden;margin-top:10px"><div style="background:var(--acc);height:4px;border-radius:3px;width:50%"></div></div>
+  </div>
+  <div style="background:var(--s);border:1px solid var(--b);border-radius:16px;padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px">
+    <div style="width:48px;height:48px;background:var(--abg);border:2px solid var(--acc);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0"><div style="font-size:17px;font-weight:800;color:var(--acc);line-height:1">4</div><div style="font-size:7px;font-weight:700;color:var(--ab);text-transform:uppercase">lvl</div></div>
+    <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px" id="h-name">Consistent Grinder ⚙️</div><div style="font-size:11px;color:var(--t3);margin-bottom:5px">14 check-ins · 6 week streak · Silver rank</div><div class="xp-wrap"><div class="xp-fill" style="width:68%"></div></div><div style="font-size:10px;color:var(--t4);margin-top:3px">340 / 500 XP to Level 5</div></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab on" id="ht-pods" onclick="hTab('pods')">Pods</button>
+    <button class="tab" id="ht-wars" onclick="hTab('wars')">Wars</button>
+    <button class="tab" id="ht-solo" onclick="hTab('solo')">Solo</button>
+    <button class="tab" id="ht-feed" onclick="hTab('feed')">Feed</button>
+  </div>
+  <div id="hv-pods">
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:16px;padding:15px;margin-bottom:10px;cursor:pointer" onclick="go('pod1')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><div style="font-size:15px;font-weight:700;color:#fff">Morning Grinders</div><span class="rk r2">You #2</span></div>
+      <div style="font-size:10px;font-weight:700;color:var(--grn);margin-bottom:9px;background:var(--gbg);border:1px solid var(--gb);display:inline-block;padding:2px 8px;border-radius:5px">"No excuses, just show up."</div>
+      <div class="av-stk"><div class="av av-a" style="width:26px;height:26px;font-size:10px">S</div><div class="av av-y" style="width:26px;height:26px;font-size:10px">A</div><div class="av av-b" style="width:26px;height:26px;font-size:10px">J</div><div class="av av-c" style="width:26px;height:26px;font-size:10px">M</div><div class="av av-d" style="width:26px;height:26px;font-size:10px">R</div><div class="av av-e" style="width:26px;height:26px;font-size:10px">T</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:12px;color:var(--t3)">14 check-ins this week</div><div style="font-size:11px;font-weight:700;color:var(--amb)">🔥 4 streak</div></div>
+    </div>
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:16px;padding:15px;cursor:pointer" onclick="go('pod2')">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px"><div style="font-size:15px;font-weight:700;color:#fff">Office Crew</div><span class="rk r1">You #1 👑</span></div>
+      <div class="av-stk"><div class="av av-y" style="width:26px;height:26px;font-size:10px">A</div><div class="av av-f" style="width:26px;height:26px;font-size:10px">L</div><div class="av av-c" style="width:26px;height:26px;font-size:10px">M</div><div class="av av-b" style="width:26px;height:26px;font-size:10px">J</div><div class="av av-d" style="width:26px;height:26px;font-size:10px">R</div></div>
+      <div style="font-size:12px;color:var(--t3)">9 check-ins · 🔥 2 streak</div>
+    </div>
+  </div>
+  <div id="hv-wars" style="display:none">
+    <div class="war-card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.07em">⚔️ Active war</div><div style="font-size:10px;color:var(--t3)">Ends Sunday</div></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="flex:1;text-align:center"><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px">Morning Grinders</div><div style="font-size:28px;font-weight:800;color:var(--grn);letter-spacing:-1px">14</div></div>
+        <div style="font-size:18px;font-weight:800;color:var(--t4)">VS</div>
+        <div style="flex:1;text-align:center"><div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:3px">Iron Squad</div><div style="font-size:28px;font-weight:800;color:var(--red);letter-spacing:-1px">11</div></div>
+      </div>
+      <div style="background:var(--b);border-radius:6px;height:10px;overflow:hidden;display:flex;margin-bottom:7px"><div style="background:var(--grn);height:10px;width:56%;border-radius:6px 0 0 6px"></div><div style="background:var(--red);flex:1;border-radius:0 6px 6px 0"></div></div>
+      <div style="font-size:11px;color:var(--grn);text-align:center;font-weight:600">Winning by 3 — keep going 🔥</div>
+    </div>
+    <div style="background:var(--gbg);border:1px solid var(--gb);border-radius:14px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--grn);margin-bottom:7px">Last week — Victory</div>
+      <div style="font-size:14px;color:var(--t2)">Morning Grinders <span style="color:var(--grn);font-weight:700">16</span> vs Beast Mode <span style="color:var(--red)">12</span></div>
+      <div style="margin-top:8px;background:var(--s);border-radius:9px;padding:10px 12px"><div style="font-size:11px;color:var(--t3);margin-bottom:3px">Their message:</div><div style="font-size:13px;color:var(--t2);font-style:italic">"Fair play. See you next week 💪"</div></div>
+    </div>
+  </div>
+  <div id="hv-solo" style="display:none">
+    <div class="card" style="text-align:center;padding:22px 14px">
+      <div style="font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Personal streak</div>
+      <div style="font-size:72px;font-weight:800;color:var(--acc);letter-spacing:-4px;line-height:1" id="solo-streak">6</div>
+      <div style="font-size:13px;color:var(--t3);margin-bottom:16px">weeks consistent</div>
+      <div style="border-top:1px solid var(--b);padding-top:14px" id="solo-area">
+        <div style="font-size:13px;color:var(--t3);margin-bottom:10px">Did you train this week?</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button style="background:var(--abg);border:1px solid var(--acc);border-radius:9px;padding:9px 17px;color:var(--am);font-size:13px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif" onclick="logSolo()">✓ Yes</button>
+          <button style="background:var(--s);border:1px solid var(--b2);border-radius:9px;padding:9px 17px;color:var(--t3);font-size:13px;cursor:pointer;font-family:'Space Grotesk',sans-serif">Not yet</button>
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div class="card" style="text-align:center"><div style="font-size:22px;font-weight:700;color:var(--t)">84</div><div style="font-size:10px;color:var(--t3)">consistency score</div></div>
+      <div class="card" style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--t)">Silver</div><div style="font-size:10px;color:var(--t3)">personal rank</div></div>
+    </div>
+  </div>
+  <div id="hv-feed" style="display:none">
+    <div class="coach-card">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:10px"><div class="coach-av">🤖</div><div><div style="font-size:13px;font-weight:700;color:var(--t)">GymRank Coach</div><div style="font-size:11px;color:var(--t3)">Monday recap</div></div></div>
+      <div style="font-size:12px;color:var(--t2);line-height:1.65"><b style="color:var(--t)">Morning Grinders — Week 6.</b> <span style="color:var(--grn);font-weight:600">Sara crushed it with 4 sessions.</span> <span style="color:var(--grn);font-weight:600">Alex hit goal.</span> <span style="color:var(--red);font-weight:600">Tom missed again — 2 weeks running.</span> This week target: 16 check-ins. Let's go.</div>
+    </div>
+    <div class="notif nd"><div class="ndot" style="background:var(--acc)"></div><div><div style="font-size:12px;color:var(--am)">Sara checked in — 4 straight Tuesdays 🔥</div><div style="font-size:10px;color:var(--t4);margin-top:2px">3 mins ago</div></div></div>
+    <div class="notif ng"><div class="ndot" style="background:var(--grn)"></div><div><div style="font-size:12px;color:var(--grn)">Morning Grinders won pod war! 16–12 🏆</div><div style="font-size:10px;color:var(--t4);margin-top:2px">Sunday</div></div></div>
+    <div class="notif nr"><div class="ndot" style="background:var(--red)"></div><div><div style="font-size:12px;color:#ff8888">Tom is last again — owes a commitment.</div><div style="font-size:10px;color:var(--t4);margin-top:2px">Yesterday</div></div></div>
+  </div>
+  <div class="nav">
+    <button class="ni on" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni" onclick="go('checkin')"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ POD 1 ═══ -->
+<div class="screen" id="s-pod1">
+  <button class="back" onclick="go('home')">← My pods</button>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px"><div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px">Morning Grinders</div><span class="rk r2" id="p1-badge">You #2</span></div>
+  <div style="font-size:11px;color:var(--t3);margin-bottom:6px">Week 6 · Resets Sunday · 3× goal</div>
+  <div style="font-size:11px;font-weight:700;color:var(--grn);margin-bottom:14px;background:var(--gbg);border:1px solid var(--gb);display:inline-block;padding:3px 10px;border-radius:6px">"No excuses, just show up."</div>
+  <button class="ci-btn ci-r" id="ci-p1" onclick="doCheckin()"><svg width="17" height="17" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 10l5 5 7-8"/></svg>Check in now</button>
+  <div class="card" style="margin-bottom:10px">
+    <div class="slbl" style="margin-bottom:7px">Your week</div>
+    <div class="wl"><span class="wlb">M</span><span class="wlb">T</span><span class="wlb">W</span><span class="wlb">T</span><span class="wlb">F</span><span class="wlb">S</span><span class="wlb">S</span></div>
+    <div class="wg" id="p1-wg"><div class="wd wdone">✓</div><div class="wd wmiss"></div><div class="wd wdone">✓</div><div class="wd wmiss"></div><div class="wd wdone">✓</div><div class="wd wtoday" id="p1-today">·</div><div class="wd wmiss"></div></div>
+    <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px" id="p1-status">3 of 3 — goal hit 🎉</div>
+  </div>
+  <div class="slbl">Weekly leaderboard</div>
+  <div class="lb-row lbo"><div class="lb-pos p1">1</div><div class="av av-a" style="width:32px;height:32px;font-size:12px">S</div><div class="lb-i"><div class="lb-n">Sara 👑</div><div class="lb-s">4 check-ins · captain</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:100%"></div></div></div></div>
+  <div class="lb-row lby" id="p1-you"><div class="lb-pos p2" id="p1-pos">2</div><div class="av av-y" style="width:32px;height:32px;font-size:12px">A</div><div class="lb-i"><div class="lb-n">Alex (you) ⚙️</div><div class="lb-s" id="p1-sub">3 check-ins · goal met</div></div><div class="lb-b"><div class="bt"><div class="bf bfy" style="width:75%" id="p1-bar"></div></div></div></div>
+  <div class="lb-row lbo"><div class="lb-pos p3">3</div><div class="av av-b" style="width:32px;height:32px;font-size:12px">J</div><div class="lb-i"><div class="lb-n">James 🦁</div><div class="lb-s">2 check-ins</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:50%"></div></div></div></div>
+  <div class="lb-row lbo"><div class="lb-pos">4</div><div class="av av-c" style="width:32px;height:32px;font-size:12px">M</div><div class="lb-i"><div class="lb-n">Maya 🔄</div><div class="lb-s">2 check-ins</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:50%"></div></div></div></div>
+  <div class="lb-row lbo"><div class="lb-pos">5</div><div class="av av-d" style="width:32px;height:32px;font-size:12px">R</div><div class="lb-i"><div class="lb-n">Ryan 📣</div><div class="lb-s">1 check-in</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:25%"></div></div></div></div>
+  <div class="lb-row lbb"><div class="lb-pos" style="color:var(--red)">6</div><div class="av av-e" style="width:32px;height:32px;font-size:12px;background:var(--red)">T</div><div class="lb-i"><div class="lb-n" style="color:#ff8888">Tom 😴</div><div class="lb-s" style="color:#663333">0 check-ins · must commit</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:0"></div></div></div></div>
+  <div class="commit-box"><div class="commit-t">Tom's commitment</div><div class="commit-tx">"I'll go Mon, Wed, Fri — work trip is over."</div></div>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni on"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ POD 2 ═══ -->
+<div class="screen" id="s-pod2">
+  <button class="back" onclick="go('home')">← My pods</button>
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px"><div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px">Office Crew</div><span class="rk r1">You #1 👑</span></div>
+  <div style="font-size:11px;color:var(--t3);margin-bottom:14px">Week 2 · You're Captain this week</div>
+  <button class="ci-btn ci-d">✓ Checked in today</button>
+  <div class="card" style="margin-bottom:10px">
+    <div class="wl"><span class="wlb">M</span><span class="wlb">T</span><span class="wlb">W</span><span class="wlb">T</span><span class="wlb">F</span><span class="wlb">S</span><span class="wlb">S</span></div>
+    <div class="wg"><div class="wd wdone">✓</div><div class="wd wdone">✓</div><div class="wd wmiss"></div><div class="wd wdone">✓</div><div class="wd wmiss"></div><div class="wd wgoal">✓</div><div class="wd wmiss"></div></div>
+    <div style="font-size:11px;color:var(--t3);text-align:center;margin-top:5px">4 of 3 — crushing it 💪</div>
+  </div>
+  <div class="lb-row lby"><div class="lb-pos p1">1</div><div class="av av-y" style="width:32px;height:32px;font-size:12px">A</div><div class="lb-i"><div class="lb-n">Alex (you) 👑</div><div class="lb-s">4 check-ins</div></div><div class="lb-b"><div class="bt"><div class="bf bfy" style="width:100%"></div></div></div></div>
+  <div class="lb-row lbo"><div class="lb-pos p2">2</div><div class="av av-f" style="width:32px;height:32px;font-size:12px">L</div><div class="lb-i"><div class="lb-n">Lisa</div><div class="lb-s">3 check-ins</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:75%"></div></div></div></div>
+  <div class="lb-row lbo"><div class="lb-pos p3">3</div><div class="av av-c" style="width:32px;height:32px;font-size:12px">M</div><div class="lb-i"><div class="lb-n">Maya</div><div class="lb-s">2 check-ins</div></div><div class="lb-b"><div class="bt"><div class="bf" style="width:50%"></div></div></div></div>
+  <div class="lb-row lbb"><div class="lb-pos" style="color:var(--red)">4</div><div class="av" style="width:32px;height:32px;font-size:12px;background:#555;border-color:var(--bg)">R</div><div class="lb-i"><div class="lb-n" style="color:#ff8888">Ryan</div><div class="lb-s" style="color:#663333">0 · must commit</div></div></div>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni on"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ CHECK IN ═══ -->
+<div class="screen" id="s-checkin">
+  <div style="font-size:20px;font-weight:800;color:var(--t);letter-spacing:-.5px;margin-bottom:18px">Check in</div>
+  <div class="gps-banner">
+    <div style="font-size:18px;flex-shrink:0">📍</div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#4d96ff;margin-bottom:2px">You're at Equinox</div><div style="font-size:11px;color:#1a3a6a">GPS detected</div></div>
+    <button onclick="doCheckin();go('pod1')" style="background:#4d96ff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#fff;cursor:pointer;font-family:'Space Grotesk',sans-serif">Check in</button>
+  </div>
+  <div style="background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;cursor:pointer;margin-bottom:8px" onclick="doCheckin();go('pod1')">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:2px">Morning Grinders</div><div style="font-size:11px;color:var(--t3)">3 of 3 this week · You're #2</div></div><span class="rk r2">Check in</span></div>
+  </div>
+  <div style="background:var(--gbg);border:1px solid var(--gb);border-radius:14px;padding:14px;margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:14px;font-weight:600;color:#fff;margin-bottom:2px">Office Crew</div><div style="font-size:11px;color:var(--grn)">Already checked in ✓</div></div><span class="rk r1">Done</span></div>
+  </div>
+  <div class="slbl" style="margin-top:6px">What did you train? (optional)</div>
+  <div class="sess-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+    <button onclick="pickSess(this)" style="background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:10px 4px;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">Push</button>
+    <button onclick="pickSess(this)" style="background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:10px 4px;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">Pull</button>
+    <button onclick="pickSess(this)" style="background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:10px 4px;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">Legs</button>
+    <button onclick="pickSess(this)" style="background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:10px 4px;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">Cardio</button>
+    <button onclick="pickSess(this)" style="background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:10px 4px;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">Full body</button>
+    <button onclick="pickSess(this)" style="background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:10px 4px;color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Space Grotesk',sans-serif">Sport</button>
+  </div>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni on"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ CREATE POD ═══ -->
+<div class="screen" id="s-create">
+  <button class="back" onclick="go('home')">← Back</button>
+  <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:6px">Create a pod</div>
+  <div style="font-size:14px;color:var(--t3);margin-bottom:18px">6 people. Ranked on who showed up most.</div>
+  <input class="inp" placeholder="Pod name" value="Squad Goals"/>
+  <div class="slbl">Weekly goal</div>
+  <div class="cg"><button class="chip" onclick="soloChip(this)">2×/week</button><button class="chip on" onclick="soloChip(this)">3×/week</button><button class="chip" onclick="soloChip(this)">4×/week</button><button class="chip" onclick="soloChip(this)">5×/week</button></div>
+  <div class="slbl">Pod constitution</div>
+  <input class="inp" value="No excuses — just show up."/>
+  <button class="btn bp" onclick="go('invite')">Create pod →</button>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni" onclick="go('checkin')"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni on"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ INVITE ═══ -->
+<div class="screen" id="s-invite">
+  <button class="back" onclick="go('create')">← Back</button>
+  <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:18px">Invite your pod</div>
+  <div style="background:var(--s);border:1px solid var(--b2);border-radius:14px;padding:16px;text-align:center;margin-bottom:18px"><div style="font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Your invite code</div><div style="font-size:28px;font-weight:800;color:var(--acc);letter-spacing:4px;margin-bottom:4px">GRND-5741</div><div style="font-size:11px;color:var(--t4)">Share with 5 friends</div></div>
+  <div style="display:flex;align-items:center;gap:9px;background:var(--s);border:1px solid var(--b2);border-radius:12px;padding:12px 14px;margin-bottom:7px"><div class="av av-a" style="width:32px;height:32px;font-size:12px">S</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:#fff">Sara K.</div></div><button onclick="this.textContent='Sent ✓';this.style.color='var(--grn)'" style="background:var(--gbg);border:1px solid var(--gb);border-radius:8px;padding:5px 11px;color:var(--grn);font-size:11px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif">Invite</button></div>
+  <div style="display:flex;align-items:center;gap:9px;background:var(--s);border:1px solid var(--b2);border-radius:12px;padding:12px 14px;margin-bottom:7px"><div class="av av-b" style="width:32px;height:32px;font-size:12px">J</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:#fff">James T.</div></div><button onclick="this.textContent='Sent ✓';this.style.color='var(--grn)'" style="background:var(--gbg);border:1px solid var(--gb);border-radius:8px;padding:5px 11px;color:var(--grn);font-size:11px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif">Invite</button></div>
+  <div style="display:flex;align-items:center;gap:9px;background:var(--s);border:1px solid var(--b2);border-radius:12px;padding:12px 14px;margin-bottom:18px"><div class="av av-c" style="width:32px;height:32px;font-size:12px">M</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:#fff">Maya R.</div></div><button onclick="this.textContent='Sent ✓';this.style.color='var(--grn)'" style="background:var(--gbg);border:1px solid var(--gb);border-radius:8px;padding:5px 11px;color:var(--grn);font-size:11px;font-weight:700;cursor:pointer;font-family:'Space Grotesk',sans-serif">Invite</button></div>
+  <button class="btn bp" onclick="go('home')">Done</button>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni" onclick="go('checkin')"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni on"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ REWARDS ═══ -->
+<div class="screen" id="s-rewards">
+  <div style="font-size:20px;font-weight:800;color:var(--t);letter-spacing:-.5px;margin-bottom:14px">Rewards</div>
+  <div style="background:var(--abg);border:1px solid var(--ab);border-radius:16px;padding:16px;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+      <div><div style="font-size:10px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px">Current streak</div><div style="font-size:40px;font-weight:800;color:var(--acc);letter-spacing:-2px;line-height:1">4</div><div style="font-size:12px;color:var(--t3)">weeks</div></div>
+      <div style="text-align:right"><div style="font-size:10px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px">Next reward</div><div style="font-size:13px;font-weight:700;color:var(--t)">Week 8</div><div style="font-size:11px;color:var(--t3)">4 weeks away</div></div>
+    </div>
+    <div style="background:rgba(0,0,0,.3);border-radius:4px;height:7px;overflow:hidden;margin-bottom:5px"><div style="background:var(--acc);height:7px;border-radius:4px;width:33%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3)"><span>W1</span><span style="color:var(--am);font-weight:600">W4 ✓</span><span>W8</span><span>W12</span></div>
+  </div>
+  <div class="tab-bar">
+    <button class="tab on" id="rw-t1" onclick="rwTab('milestones')">Milestones</button>
+    <button class="tab" id="rw-t2" onclick="rwTab('brands')">Brands</button>
+    <button class="tab" id="rw-t3" onclick="rwTab('earned')">Earned</button>
+  </div>
+  <div id="rw-milestones">
+    <div class="rt rt-active" id="tier-w4">
+      <div style="position:absolute;top:14px;right:14px;background:var(--gbg);color:var(--grn);border:1px solid var(--gb);font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">Just unlocked!</div>
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px"><div style="width:46px;height:46px;border-radius:13px;background:#1e3308;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🥉</div><div><div style="font-size:10px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Week 4 milestone</div><div style="font-size:16px;font-weight:800;color:var(--t);letter-spacing:-.3px">Bronze Rank</div></div></div>
+      <div class="ri"><div class="ri-dot" style="background:var(--grn)"></div><div style="font-size:13px;color:var(--t2);flex:1">1 month GymRank Pro free</div><div style="font-size:12px;font-weight:700;color:var(--grn)">$7 value</div></div>
+      <div class="ri"><div class="ri-dot" style="background:#4d96ff"></div><div style="font-size:13px;color:var(--t2);flex:1">10% off Myprotein</div><div style="font-size:12px;font-weight:700;color:#4d96ff">Code inside</div></div>
+      <div class="ri" style="margin-bottom:0"><div class="ri-dot" style="background:var(--amb)"></div><div style="font-size:13px;color:var(--t2);flex:1">Bronze rank badge</div><div style="font-size:12px;font-weight:700;color:var(--amb)">Permanent</div></div>
+      <button onclick="claimReward()" style="width:100%;padding:12px;background:var(--grn);border:none;border-radius:10px;font-size:13px;font-weight:700;color:#0a0a0a;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-top:12px">Claim rewards →</button>
+    </div>
+    <div class="rt rt-locked">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px"><div style="width:46px;height:46px;border-radius:13px;background:var(--b);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;filter:grayscale(1)">🥈</div><div><div style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Week 8 milestone</div><div style="font-size:16px;font-weight:700;color:var(--t3);letter-spacing:-.3px">Silver Rank</div></div></div>
+      <div class="ri" style="opacity:.4"><div class="ri-dot" style="background:var(--t4)"></div><div style="font-size:13px;color:var(--t4);flex:1">2 months Pro free</div><div style="font-size:12px;font-weight:700;color:var(--t4)">$14 value</div></div>
+      <div class="ri" style="opacity:.4;margin-bottom:0"><div class="ri-dot" style="background:var(--t4)"></div><div style="font-size:13px;color:var(--t4);flex:1">15% off Bulk Supplements</div></div>
+      <div style="margin-top:10px;background:var(--b);border-radius:4px;height:4px;overflow:hidden;margin-bottom:4px"><div style="background:var(--acc);height:4px;width:50%"></div></div>
+      <div style="font-size:11px;color:var(--t4)">4 more weeks to unlock</div>
+    </div>
+    <div class="rt rt-locked">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:12px"><div style="width:46px;height:46px;border-radius:13px;background:var(--b);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;filter:grayscale(1)">🏆</div><div><div style="font-size:10px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Season 1 end · Week 12</div><div style="font-size:16px;font-weight:700;color:var(--t3);letter-spacing:-.3px">Gold + Season Winner</div></div></div>
+      <div class="ri" style="opacity:.4"><div class="ri-dot" style="background:var(--t4)"></div><div style="font-size:13px;color:var(--t4);flex:1">3 months Pro free</div><div style="font-size:12px;font-weight:700;color:var(--t4)">$21 value</div></div>
+      <div class="ri" style="opacity:.4;margin-bottom:0"><div class="ri-dot" style="background:var(--t4)"></div><div style="font-size:13px;color:var(--t4);flex:1">Gymshark 20% discount</div></div>
+      <div style="margin-top:10px;background:var(--b);border-radius:4px;height:4px;overflow:hidden;margin-bottom:4px"><div style="background:var(--acc);height:4px;width:33%"></div></div>
+      <div style="font-size:11px;color:var(--t4)">8 more weeks to unlock</div>
+    </div>
+  </div>
+  <div id="rw-brands" style="display:none">
+    <div style="background:var(--s);border:1px solid var(--b);border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--am);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px">Active codes</div>
+      <div style="display:flex;align-items:center;gap:10px;background:#0a1a30;border:1px solid #1a3a6a;border-radius:11px;padding:12px 13px;cursor:pointer" onclick="showCodeModal()">
+        <div style="width:38px;height:38px;background:#1a2a40;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">💊</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px">Myprotein</div><div style="font-size:11px;color:#4d96ff">10% off — unlocked at Week 4</div></div>
+        <div style="font-size:11px;font-weight:700;color:#4d96ff;background:#0a1a30;border:1px solid #1a3a6a;border-radius:7px;padding:5px 9px">Reveal</div>
+      </div>
+    </div>
+    <div style="font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Locked</div>
+    <div style="background:#0e0e12;border:1px solid var(--b);border-radius:13px;padding:13px;margin-bottom:7px;opacity:.6"><div style="display:flex;align-items:center;gap:10px"><div style="width:38px;height:38px;background:var(--b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;filter:grayscale(1);flex-shrink:0">🥤</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--t3);margin-bottom:2px">Bulk Supplements</div><div style="font-size:11px;color:var(--t4)">15% off — Week 8</div></div><div style="font-size:11px;font-weight:700;color:var(--t4);background:var(--b);border-radius:7px;padding:5px 9px">4 wks</div></div></div>
+    <div style="background:#0e0e12;border:1px solid var(--b);border-radius:13px;padding:13px;opacity:.5"><div style="display:flex;align-items:center;gap:10px"><div style="width:38px;height:38px;background:var(--b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;filter:grayscale(1);flex-shrink:0">👕</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--t3);margin-bottom:2px">Gymshark</div><div style="font-size:11px;color:var(--t4)">20% off — Season winner</div></div><div style="font-size:11px;font-weight:700;color:var(--t4);background:var(--b);border-radius:7px;padding:5px 9px">8 wks</div></div></div>
+  </div>
+  <div id="rw-earned" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div style="background:var(--gbg);border:1px solid var(--gb);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;margin-bottom:4px">🏅</div><div style="font-size:10px;font-weight:700;color:var(--grn)">Founder</div></div>
+      <div style="background:var(--abg);border:1px solid var(--ab);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;margin-bottom:4px">🔥</div><div style="font-size:10px;font-weight:700;color:var(--am)">4 Week</div></div>
+      <div style="background:var(--abgm);border:1px solid var(--amb);border-radius:12px;padding:12px;text-align:center"><div style="font-size:22px;margin-bottom:4px">⚔️</div><div style="font-size:10px;font-weight:700;color:var(--amb)">War Win</div></div>
+      <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px;text-align:center;opacity:.3"><div style="font-size:22px;margin-bottom:4px;filter:grayscale(1)">👑</div><div style="font-size:10px;font-weight:700;color:var(--t4)">Captain</div></div>
+      <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px;text-align:center;opacity:.3"><div style="font-size:22px;margin-bottom:4px;filter:grayscale(1)">🥈</div><div style="font-size:10px;font-weight:700;color:var(--t4)">Silver</div></div>
+      <div style="background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px;text-align:center;opacity:.3"><div style="font-size:22px;margin-bottom:4px;filter:grayscale(1)">🏆</div><div style="font-size:10px;font-weight:700;color:var(--t4)">Gold</div></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni" onclick="go('checkin')"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni on"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni" onclick="go('profile')"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ SHARE ═══ -->
+<div class="screen" id="s-share">
+  <button class="back" onclick="go('home')">← Back</button>
+  <div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:16px">Share your week</div>
+  <div class="share-card">
+    <div style="font-size:10px;font-weight:700;color:#4a7a18;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">GymRank · Season 1 · Week 6</div>
+    <div style="font-size:11px;color:#6a9a28;margin-bottom:3px" id="share-name">Alex · The Grinder ⚙️</div>
+    <div style="font-size:46px;font-weight:800;color:var(--grn);letter-spacing:-2px;line-height:1;margin-bottom:3px">6</div>
+    <div style="font-size:14px;color:#6a9a28;margin-bottom:12px">week streak</div>
+    <div style="display:flex;justify-content:center;gap:18px;margin-bottom:12px">
+      <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#fff">14</div><div style="font-size:9px;color:#4a7a18">check-ins</div></div>
+      <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#fff">#2</div><div style="font-size:9px;color:#4a7a18">season</div></div>
+      <div style="text-align:center"><div style="font-size:18px;font-weight:700;color:#fff">Silver</div><div style="font-size:9px;color:#4a7a18">rank</div></div>
+    </div>
+    <div style="background:rgba(0,0,0,.2);border-radius:7px;padding:6px 10px;display:inline-block"><div style="font-size:10px;font-weight:700;color:var(--grn)">Morning Grinders won pod war ⚔️</div></div>
+  </div>
+  <button class="btn bgrn" style="margin-bottom:8px">Copy & share</button>
+  <button class="btn bg" onclick="go('home')">Not now</button>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni" onclick="go('checkin')"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni on"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
+<div class="screen" id="s-profile">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px"><div style="font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px">Profile</div><button onclick="go('ob0')" style="background:none;border:1px solid var(--b2);border-radius:7px;padding:5px 11px;color:var(--t4);font-size:11px;cursor:pointer;font-family:'Space Grotesk',sans-serif">Sign out</button></div>
+  <div style="text-align:center;margin-bottom:18px">
+    <div class="av av-y" style="width:68px;height:68px;font-size:24px;margin:0 auto 10px" id="profile-av">A</div>
+    <div style="font-size:19px;font-weight:700;color:#fff;margin-bottom:6px" id="profile-name">Alex</div>
+    <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap"><span style="background:var(--abg);color:var(--am);border:1px solid var(--ab);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">⚙️ Grinder</span><span style="background:var(--gbg);color:var(--grn);border:1px solid var(--gb);font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px">Founder</span></div>
+  </div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="slbl" style="margin-bottom:10px">Season 1 stats</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+      <div><div style="font-size:20px;font-weight:700;color:var(--acc)">#2</div><div style="font-size:10px;color:var(--t3)">season</div></div>
+      <div><div style="font-size:20px;font-weight:700;color:var(--grn)">6</div><div style="font-size:10px;color:var(--t3)">streak</div></div>
+      <div><div style="font-size:20px;font-weight:700;color:var(--amb)">14</div><div style="font-size:10px;color:var(--t3)">check-ins</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="slbl" style="margin-bottom:10px">XP breakdown</div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--b)"><span style="font-size:12px;color:var(--t2)">Check-ins</span><span style="font-size:12px;font-weight:600;color:var(--t)">+280 XP</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--b)"><span style="font-size:12px;color:var(--t2)">Streak bonus ⚙️</span><span style="font-size:12px;font-weight:600;color:var(--grn)">+120 XP</span></div>
+    <div style="display:flex;justify-content:space-between;padding:7px 0"><span style="font-size:12px;color:var(--t2)">Pod wars won</span><span style="font-size:12px;font-weight:600;color:var(--t)">+60 XP</span></div>
+  </div>
+  <div class="nav">
+    <button class="ni" onclick="go('home')"><div class="ni-ic">🏠</div><div class="ni-lb">Home</div></button>
+    <button class="ni" onclick="go('checkin')"><div class="ni-ic">✓</div><div class="ni-lb">Check in</div></button>
+    <button class="ni" onclick="go('create')"><div class="ni-ic">+</div><div class="ni-lb">New pod</div></button>
+    <button class="ni" onclick="go('rewards')"><div class="ni-ic">🎁</div><div class="ni-lb">Rewards</div></button>
+    <button class="ni on"><div class="ni-ic">👤</div><div class="ni-lb">Profile</div></button>
+  </div>
+</div>
+
+<!-- ═══ CODE MODAL ═══ -->
+<div class="modal" id="code-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:18px;font-weight:800;color:var(--t);letter-spacing:-.4px;margin-bottom:4px">Myprotein</div>
+    <div style="font-size:13px;color:var(--t3);margin-bottom:18px">10% off your order — earned at Week 4</div>
+    <div style="background:var(--s);border:1px solid var(--b2);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.07em;font-weight:600">Your discount code</div>
+      <div style="font-size:26px;font-weight:800;color:#4d96ff;letter-spacing:3px">GYMRANK10</div>
+    </div>
+    <div style="font-size:12px;color:var(--t3);text-align:center;margin-bottom:16px;line-height:1.5">You earned this by hitting your <b style="color:var(--t)">4-week streak.</b></div>
+    <button onclick="closeModal('code-modal')" style="width:100%;padding:13px;background:#4d96ff;border:none;border-radius:12px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:'Space Grotesk',sans-serif;margin-bottom:8px">Copy code</button>
+    <button onclick="closeModal('code-modal')" style="width:100%;padding:12px;background:transparent;border:1px solid var(--b2);border-radius:12px;font-size:14px;color:var(--t3);cursor:pointer;font-family:'Space Grotesk',sans-serif">Close</button>
+  </div>
+</div>
+
+<!-- ═══ CLAIM MODAL ═══ -->
+<div class="modal" id="claim-modal" style="align-items:center;justify-content:center">
+  <div style="background:#141418;border:1px solid var(--gb);border-radius:20px;padding:26px 22px;width:calc(100% - 40px);text-align:center;max-width:340px">
+    <div style="font-size:44px;margin-bottom:10px">🎉</div>
+    <div style="font-size:19px;font-weight:800;color:var(--t);letter-spacing:-.5px;margin-bottom:5px">Rewards claimed!</div>
+    <div style="font-size:13px;color:var(--t3);line-height:1.6;margin-bottom:18px">1 month Pro activated. Myprotein code in Brands tab. Bronze rank unlocked.</div>
+    <div style="background:var(--gbg);border:1px solid var(--gb);border-radius:12px;padding:13px;margin-bottom:16px;text-align:left">
+      <div style="font-size:11px;font-weight:700;color:var(--grn);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Next — Week 8</div>
+      <div style="font-size:13px;color:var(--t2);line-height:1.5">4 more weeks → Silver rank, 2 months Pro, Bulk 15% off.</div>
+    </div>
+    <button onclick="closeModal('claim-modal')" style="width:100%;padding:13px;background:var(--grn);border:none;border-radius:12px;font-size:14px;font-weight:700;color:#0a0a0a;cursor:pointer;font-family:'Space Grotesk',sans-serif">Keep the streak going →</button>
+  </div>
+</div>
+
+<script>
+var ci1done=false,calcDone=false;
+
+/* ── Navigation ── */
+function go(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  var el=document.getElementById('s-'+id);
+  if(el){el.classList.add('active');el.scrollTop=0;}
+  if(id==='ob5')setTimeout(runCalc,300);
+}
+
+/* ── Tab switchers ── */
+function hTab(t){
+  ['pods','wars','solo','feed'].forEach(function(x){
+    var v=document.getElementById('hv-'+x);
+    var b=document.getElementById('ht-'+x);
+    if(v)v.style.display=x===t?'block':'none';
+    if(b)b.classList.toggle('on',x===t);
+  });
+}
+
+function rwTab(t){
+  ['milestones','brands','earned'].forEach(function(x){
+    var v=document.getElementById('rw-'+x);
+    var b=document.getElementById('rw-t'+(['milestones','brands','earned'].indexOf(x)+1));
+    if(v)v.style.display=x===t?'block':'none';
+    if(b)b.classList.toggle('on',x===t);
+  });
+}
+
+/* ── Onboarding Q choice (single select, unlocks continue button) ── */
+function pick(gId,el,btnId){
+  var group=document.getElementById(gId);
+  group.querySelectorAll('.choice').forEach(function(c){
+    c.classList.remove('on');
+    var chk=c.querySelector('.ch-check');
+    if(chk)chk.textContent='';
+  });
+  el.classList.add('on');
+  var chk=el.querySelector('.ch-check');
+  if(chk)chk.textContent='✓';
+  var btn=document.getElementById(btnId);
+  if(btn){btn.disabled=false;btn.style.opacity='1';}
+}
+
+/* ── Frequency picker — scoped to nearest .freq-grid parent ── */
+function pickFreq(el){
+  var grid=el.closest('.freq-grid');
+  if(grid){
+    grid.querySelectorAll('.freq').forEach(function(f){f.classList.remove('on');});
+  }
+  el.classList.add('on');
+}
+
+/* ── Single-select chip (goal type, weekly goal in create pod) ── */
+function soloChip(el){
+  var grid=el.closest('.cg');
+  if(grid){grid.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});}
+  el.classList.add('on');
+}
+
+/* ── Multi-select toggle chip (rest days, triggers) ── */
+function toggleChip(el){
+  el.classList.toggle('on');
+}
+
+/* ── Persona picker (ob1 goal — single select) ── */
+function pickGoal(el){
+  var grid=el.closest('.cg');
+  if(grid){grid.querySelectorAll('.chip').forEach(function(c){c.classList.remove('on');});}
+  el.classList.add('on');
+}
+
+/* ── Persona card picker (single select) ── */
+function pickPersona(el){
+  var grid=el.closest('.persona-grid');
+  if(grid){grid.querySelectorAll('.persona').forEach(function(p){p.classList.remove('on');});}
+  el.classList.add('on');
+}
+
+/* ── Session type picker — scoped to nearest grid container ── */
+function pickSess(el){
+  var grid=el.closest('.sess-grid')||el.closest('.cg-sess');
+  if(grid){
+    grid.querySelectorAll('button').forEach(function(b){
+      b.classList.remove('on');
+      b.style.background='';b.style.borderColor='';b.style.color='';
+    });
+  }
+  el.classList.add('on');
+  el.style.background='var(--abg)';
+  el.style.borderColor='var(--acc)';
+  el.style.color='var(--am)';
+}
+
+/* ── Plan toggle on paywall ── */
+var selectedPlan='annual';
+function selectPlan(plan){
+  selectedPlan=plan;
+  var annual=document.getElementById('plan-annual');
+  var monthly=document.getElementById('plan-monthly');
+  var dotA=document.getElementById('dot-annual');
+  var dotM=document.getElementById('dot-monthly');
+  if(plan==='annual'){
+    if(annual)annual.style.border='1.5px solid var(--acc)';
+    if(monthly)monthly.style.border='1px solid var(--b2)';
+    if(dotA)dotA.style.background='#7c6aff';
+    if(dotM)dotM.style.background='';
+  } else {
+    if(monthly)monthly.style.border='1.5px solid var(--acc)';
+    if(annual)annual.style.border='1px solid var(--b2)';
+    if(dotM)dotM.style.background='#7c6aff';
+    if(dotA)dotA.style.background='';
+  }
+}
+
+/* ── Finish onboarding — carry name through ── */
+function finishOnboarding(){
+  var n=document.getElementById('inp-name');
+  if(n&&n.value.trim()){
+    var name=n.value.trim();
+    var targets=['h-name','profile-name','share-name'];
+    targets.forEach(function(id){
+      var el=document.getElementById(id);
+      if(el){
+        if(id==='h-name')el.textContent=name+' ⚙️';
+        else if(id==='share-name')el.textContent=name+' · The Grinder ⚙️';
+        else el.textContent=name;
+      }
+    });
+    var pa=document.getElementById('profile-av');
+    if(pa)pa.textContent=name[0].toUpperCase();
+  }
+  go('welcome');
+}
+
+/* ── Pod check-in ── */
+function doCheckin(){
+  if(ci1done)return;ci1done=true;
+  var b=document.getElementById('ci-p1');
+  if(b){b.className='ci-btn ci-d';b.innerHTML='✓ Checked in!';}
+  var t=document.getElementById('p1-today');
+  if(t){t.className='wd wgoal';t.textContent='✓';}
+  var s=document.getElementById('p1-status');
+  if(s)s.textContent='4 of 3 — crushing it 💪';
+  var p=document.getElementById('p1-pos');
+  if(p){p.textContent='1';p.className='lb-pos p1';}
+  var sub=document.getElementById('p1-sub');
+  if(sub)sub.textContent='4 check-ins — new #1! 👑';
+  var bar=document.getElementById('p1-bar');
+  if(bar)bar.style.width='100%';
+  var badge=document.getElementById('p1-badge');
+  if(badge){badge.textContent='You #1 👑';badge.className='rk r1';}
+  var hr=document.getElementById('h-rank');
+  if(hr)hr.textContent='#1';
+}
+
+/* ── Solo streak log ── */
+function logSolo(){
+  var s=document.getElementById('solo-streak');
+  var a=document.getElementById('solo-area');
+  if(s)s.textContent='7';
+  if(a)a.innerHTML='<div style="display:inline-block;background:var(--gbg);color:var(--grn);font-size:13px;font-weight:700;padding:8px 16px;border-radius:20px;border:1px solid var(--gb)">✓ 7 week streak!</div>';
+}
+
+/* ── Calculating animation ── */
+function runCalc(){
+  if(calcDone)return;calcDone=true;
+  var ring=document.getElementById('calc-ring');
+  var pct=document.getElementById('calc-pct');
+  var items=['ci1','ci2','ci3','ci4'];
+  var pcts=[25,55,80,100];
+  items.forEach(function(id,i){
+    setTimeout(function(){
+      var el=document.getElementById(id);
+      if(el)el.classList.add('show');
+      if(ring)ring.style.strokeDashoffset=277*(1-pcts[i]/100);
+      if(pct)pct.textContent=pcts[i]+'%';
+      if(i===3)setTimeout(function(){go('ob6');},900);
+    },700*(i+1));
+  });
+}
+
+/* ── Rewards ── */
+function claimReward(){
+  document.getElementById('claim-modal').classList.add('open');
+  var tier=document.getElementById('tier-w4');
+  if(tier){
+    tier.className='rt rt-claimed';
+    var btn=tier.querySelector('button');
+    if(btn)btn.outerHTML='<div style="width:100%;padding:11px;background:var(--gbg);border:1px solid var(--gb);border-radius:10px;font-size:13px;font-weight:700;color:var(--grn);text-align:center;margin-top:12px">✓ Claimed</div>';
+  }
+}
+
+function showCodeModal(){document.getElementById('code-modal').classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+</script>
+</body>
+</html>
